@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+
+  # =====================================================
+  # PHP + Apache
+  # =====================================================
+  php:
+    build: .
+    container_name: mediagenda_php
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./www:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - mediagenda_net
+
+  # =====================================================
+  # MySQL 8
+  # =====================================================
+  mysql:
+    image: mysql:8.0
+    container_name: mediagenda_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: mediagenda
+      MYSQL_USER: mediagenda_user
+      MYSQL_PASSWORD: mediagenda_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mediagenda_net
+
+  # =====================================================
+  # phpMyAdmin
+  # =====================================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: mediagenda_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root123
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      - mysql
+    networks:
+      - mediagenda_net
+
+# =====================================================
+# Volume para persistir os dados do MySQL
+# (mesmo se o container for removido, os dados continuam)
+# =====================================================
+volumes:
+  mysql_data:
+
+# =====================================================
+# Rede interna para os containers se comunicarem
+# =====================================================
+networks:
+  mediagenda_net:
+    driver: bridge
